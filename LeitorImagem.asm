@@ -3,14 +3,13 @@
 ###############################################################
 
 .data
-	nomeArquivo:	.asciiz		"img.bmp"	
+	nomeArquivo:	.asciiz		"img.bmp"
 
 	header:		.space		54		# tamanho do header em bytes
 	heap: 		.word   	0x10040000	# endereco do bitmap display
 	buffer:		.word		0	
 
-.text
- 
+.text 
  	lw		$s3, heap
 	###############################################################
 	# Abrindo o arquivo
@@ -62,7 +61,12 @@
 	
 	move		$t0, $zero		# contador de pixels verticais
 loopY:
-	addi		$t0, $t0, 1		
+	addi		$t0, $t0, 1
+	subu 		$t5, $s1, $t0
+	sll 		$t5, $t5, 2
+	mul		$t5, $t5, $s0
+	addu		$t5, $t5, $s3
+						# 12 * X * (Y - t0)
 	
 	move		$t1, $zero		# contador de pixels horizontais
 	loopX:
@@ -70,6 +74,7 @@ loopY:
 		
 		move		$t3, $zero		# word do pixel
 		
+		#obtem pixel RGB
 		li		$v0, 14			# código para ler um arquivo
 		move		$a0, $s6		# descritor do arquivo
 		la		$a1, buffer		# endereço do buffer
@@ -78,8 +83,8 @@ loopY:
 		
 		# salva pixel na memória
 		lw		$t3, buffer		
-		sw		$t3, ($s3)
-		addi 		$s3, $s3, 4
+		sw		$t3, ($t5)
+		addi 		$t5, $t5, 4
 	
 		bne		$t1, $s1, loopX		# Se iguais, fim dos pixels horizontais
 	
