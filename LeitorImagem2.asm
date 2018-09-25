@@ -64,6 +64,15 @@ res:
 	move		$a2, $s2		# tamanho do buffer
 	syscall					# lê o arquivo
 	
+	###############################################################
+	# Fechando o arquivo
+	li		$v0, 16			# código para fechar arquivo
+	move		$a0, $s6		# descritor do arquivo
+	syscall					# fecha o arquivo
+	
+	###############################################################
+	# Carregando imagem
+	
 	
 	move		$t7, $sp		# contador geral do endereço na pilha
 	andi		$t4, $s1, 0x00000003	# resX % 4 para descobrir o tamanho do padding
@@ -114,7 +123,82 @@ sempadding:
 	bne		$t0, $s0, loopY		# Se iguais, fim dos pixels verticais
 	
 	###############################################################
-	# Fechando o arquivo
-	li		$v0, 16			# código para fechar arquivo
+	# Carregando novo BitMap da heap na memória
+	
+	move		$t7, $sp		# contador geral do endereço na pilha
+	andi		$t4, $s1, 0x00000003	# resX % 4 para descobrir o tamanho do padding
+	
+	move		$t0, $zero		# contador de pixels verticais
+	
+	lw		$s4, heap
+loopY2:
+	addi		$t0, $t0, 1
+	subu 		$t5, $s1, $t0
+	sll 		$t5, $t5, 2
+	mul		$t5, $t5, $s0
+	addu		$t5, $t5, $s4
+						# 4 * X * (Y - t0)
+	
+	move		$t1, $zero		# contador de pixels horizontais
+	loopX2:
+		addi		$t1, $t1, 1
+		
+		move		$t3, $zero		# word do pixel
+		
+		# obtem pixel da memória		
+		lw		$t3, ($t5)
+		
+		li		$t2, 3
+		addi		$t7, $t7, 0
+		# salva pixel RGB
+		loopRGB2:
+			addi		$t2, $t2, -1
+			
+			
+			sb		$t3, ($t7)
+			srl 		$t3, $t3, 8
+			
+			addi		$t7, $t7, 1
+			
+			bnez 		$t2, loopRGB2
+		
+		addi 		$t5, $t5, 4
+		#addiu		$t7, $t7, 0
+			
+		bne		$t1, $s1, loopX2		# Se iguais, fim dos pixels horizontais
+	
+	# Tratar padding
+	beqz		$t4, sempadding2
+	
+	add		$t7, $t7, $t4
+	
+sempadding2:
+	bne		$t0, $s0, loopY2		# Se iguais, fim dos pixels verticais
+
+	###############################################################
+	# Abrindo o arquivo
+	li		$v0, 13			# código para abrir arquivo
+	la		$a0, nomeArquivoOut	# string com o nome do arquivo
+	li		$a1, 1			# modo de abertura de arquivo - Escrita
+	li		$a2, 0			
+	syscall					# abre o arquivo (descritor do arquivo em $v0)
+	move		$s6, $v0		# salva o descritor do arquivo
+	
+	###############################################################
+	# Escreve o Header
+	li		$v0, 15			# código para ler um arquivo
 	move		$a0, $s6		# descritor do arquivo
-	syscall					# fecha o arquivo
+	la		$a1, header		# endereço do buffer
+	li		$a2, 54			# tamanho do buffer
+	syscall					# lê o arquivo
+	
+	###############################################################
+	# Escreve o BitMap
+	li		$v0, 15			# código para ler um arquivo
+	move		$a0, $s6		# descritor do arquivo
+	move		$a1, $sp		# endereço do buffer
+	move		$a2, $s2		# tamanho do buffer
+	syscall					# lê o arquivo
+	
+
+
