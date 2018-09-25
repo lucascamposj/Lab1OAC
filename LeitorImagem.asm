@@ -6,7 +6,7 @@
 	nomeArquivo:	.asciiz		"img.bmp"
 
 	header:		.space		54		# tamanho do header em bytes
-	heap: 		.word   	0x10040000	# endereco do bitmap display
+	heap: 		.word   	0x10008000	# endereco do bitmap display
 	buffer:		.word		0	
 
 .text 
